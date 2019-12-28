@@ -37,7 +37,7 @@ def search_memory(base, size, query):
 
     return matches
 
-def full_scan_i32(query):
+def full_scan_integer(number, bytes, byteorder, signed):
     memory_space = find_memory_offsets()
 
     searched = []
@@ -48,13 +48,12 @@ def full_scan_i32(query):
             continue
         searched += [identifier]
 
-        matches = search_memory(location["base"], location["size"], query.to_bytes(1, sys.byteorder))
+        query = number.to_bytes(bytes, byteorder=byteorder, signed=signed)
+        matches = search_memory(location["base"], location["size"], re.escape(query))
         for address, match in matches.items():
-            number = int.from_bytes(match, byteorder=sys.byteorder, signed=True)
+            number = int.from_bytes(match, byteorder=byteorder, signed=signed)
             found.add(address)
-            #print(str(address) + ": " + str(number))
 
-    #print(json.dumps(found, indent=2))
     return found
 
 def read_byte_set(byte_set, radius):
@@ -78,15 +77,12 @@ class MainWindow(tk.Frame):
         self.window = window
         self.initUI()
 
-    def show(self):
-        self.list.insert("", "end", values=("123", "asfasd", "1342"))
-
     def initUI(self):
         self.master.title("Buttons")
         self.style = ttk.Style()
         self.style.theme_use("default")
 
-        label = tk.Label(self.window, text="High Scores", font=("Arial",30)).grid(row=0, column=0, rowspan=1, columnspan=1)
+        tk.Label(self.window, text="High Scores", font=("Arial",30)).grid(row=0, column=0, rowspan=1, columnspan=1)
 
         columns = ('Position', 'Name', 'Score')
         self.list = ttk.Treeview(self.window, columns=columns, show='headings')
@@ -94,8 +90,42 @@ class MainWindow(tk.Frame):
             self.list.heading(column, text=column)    
         self.list.grid(row=1, column=0, rowspan=1, columnspan=1)
 
-        showScores = tk.Button(self.window, text="Show scores", width=15, command=self.show).grid(row=2, column=0, rowspan=1, columnspan=1)
+        self.value_entry = tk.Entry(self.window)
+        self.value_entry.grid(row=2, column=0, rowspan=1, columnspan=1)
 
+        self.bytes_entry = tk.Entry(self.window)
+        self.bytes_entry.grid(row=3, column=0, rowspan=1, columnspan=1)
+
+        tk.Button(self.window, text="New Scan", width=15, command=self.new_scan).grid(row=4, column=0, rowspan=1, columnspan=1)
+        tk.Button(self.window, text="Update Scan", width=15, command=self.update_scan).grid(row=5, column=0, rowspan=1, columnspan=1)
+        tk.Button(self.window, text="Play", width=15, command=self.play).grid(row=6, column=0, rowspan=1, columnspan=1)
+    
+    def do_integer_scan(self):
+        value = int(self.value_entry.get())
+        bytes = int(self.bytes_entry.get())
+        return full_scan_integer(value, bytes, sys.byteorder, True)
+
+    def new_scan(self):
+        self.found = self.do_integer_scan()
+        self.update_list()
+
+    def update_scan(self):
+        self.found = self.found.intersection(self.do_integer_scan())
+        self.update_list()
+
+    def update_list(self):
+        self.list.delete(*self.list.get_children())
+        i = 0
+        for address in self.found:
+            if i > 20:
+                break
+            i += 1
+
+            self.list.insert("", "end", values=(address, "fsda", 42))
+    
+    def play(self):
+        gdb.execute("continue")
+    
 window = tk.Tk()
 window.title("GUI")
 window.geometry("500x500")
