@@ -71,6 +71,9 @@ def write_byte_set(byte_set, offset, value):
     for address in byte_set:
         gdb.selected_inferior().write_memory(address + offset, value.to_bytes(1, sys.byteorder))
 
+def write_bytes(address, value, bytes):
+    gdb.selected_inferior().write_memory(address, value.to_bytes(bytes, sys.byteorder))
+
 class MainWindow(tk.Frame):
     def __init__(self, window):
         super().__init__()
@@ -82,23 +85,39 @@ class MainWindow(tk.Frame):
         self.style = ttk.Style()
         self.style.theme_use("default")
 
-        tk.Label(self.window, text="High Scores", font=("Arial",30)).grid(row=0, column=0, rowspan=1, columnspan=1)
+        #tk.Label(self.window, text="High Scores", font=("Arial",30)).grid(row=0, column=0, rowspan=1, columnspan=1)
 
         columns = ('Position', 'Name', 'Score')
         self.list = ttk.Treeview(self.window, columns=columns, show='headings')
         for column in columns:
             self.list.heading(column, text=column)    
-        self.list.grid(row=1, column=0, rowspan=1, columnspan=1)
+        self.list.grid(row=0, column=0, rowspan=5, columnspan=2)
+
+        columns = ('Position', 'Name', 'Score')
+        self.variables = ttk.Treeview(self.window, columns=columns, show='headings')
+        for column in columns:
+            self.variables.heading(column, text=column)    
+        self.variables.grid(row=6, column=0, rowspan=1, columnspan=3)
 
         self.value_entry = tk.Entry(self.window)
-        self.value_entry.grid(row=2, column=0, rowspan=1, columnspan=1)
+        self.value_entry.grid(row=0, column=2, rowspan=1, columnspan=1)
 
         self.bytes_entry = tk.Entry(self.window)
-        self.bytes_entry.grid(row=3, column=0, rowspan=1, columnspan=1)
+        self.bytes_entry.grid(row=1, column=2, rowspan=1, columnspan=1)
 
-        tk.Button(self.window, text="New Scan", width=15, command=self.new_scan).grid(row=4, column=0, rowspan=1, columnspan=1)
-        tk.Button(self.window, text="Update Scan", width=15, command=self.update_scan).grid(row=5, column=0, rowspan=1, columnspan=1)
-        tk.Button(self.window, text="Play", width=15, command=self.play).grid(row=6, column=0, rowspan=1, columnspan=1)
+        self.new_value_entry = tk.Entry(self.window)
+        self.new_value_entry.grid(row=5, column=0, rowspan=1, columnspan=1)
+
+        tk.Button(self.window, text="New Scan",    width=15, command=self.new_scan   ).grid(row=2, column=2, rowspan=1, columnspan=1)
+        tk.Button(self.window, text="Update Scan", width=15, command=self.update_scan).grid(row=3, column=2, rowspan=1, columnspan=1)
+        tk.Button(self.window, text="Play",        width=15, command=self.play       ).grid(row=4, column=2, rowspan=1, columnspan=1)
+
+        tk.Button(self.window, text="Export",      width=15, command=self.export     ).grid(row=5, column=1, rowspan=1, columnspan=1)
+
+        #self.list.insert("", "end", values=("asdfasdf", "fsda", "42"))
+        #self.list.insert("", "end", values=("asdfasdf", "fsda", "44"))
+        #self.list.insert("", "end", values=("asdfasdf", "fsda", "45"))
+        #self.list.insert("", "end", values=("asdfasdf", "fsda", "46"))
     
     def do_integer_scan(self):
         value = int(self.value_entry.get())
@@ -125,7 +144,15 @@ class MainWindow(tk.Frame):
     
     def play(self):
         gdb.execute("continue")
-    
+
+    def export(self):
+        value = int(self.new_value_entry.get())
+        #print(json.dumps([method_name for method_name in dir(self.list) if callable(getattr(self.list, method_name))], indent=2))
+        #print(self.list.selection_get())
+        for item in self.list.selection():
+            address = int(self.list.item(item, "values")[0])
+            write_bytes(address, value, 3)
+
 window = tk.Tk()
 window.title("GUI")
 window.geometry("500x500")
