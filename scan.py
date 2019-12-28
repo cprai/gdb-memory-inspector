@@ -73,27 +73,31 @@ def write_byte_set(byte_set, offset, value):
         gdb.selected_inferior().write_memory(address + offset, value.to_bytes(1, sys.byteorder))
 
 class MainWindow(tk.Frame):
-    def __init__(self):
+    def __init__(self, window):
         super().__init__()
+        self.window = window
         self.initUI()
+
+    def show(self):
+        self.list.insert("", "end", values=("123", "asfasd", "1342"))
 
     def initUI(self):
         self.master.title("Buttons")
         self.style = ttk.Style()
         self.style.theme_use("default")
 
-        frame = tk.Frame(self, relief=tk.RAISED, borderwidth=1)
-        frame.pack(fill=tk.BOTH, expand=True)
+        label = tk.Label(self.window, text="High Scores", font=("Arial",30)).grid(row=0, column=0, rowspan=1, columnspan=1)
 
-        self.pack(fill=tk.BOTH, expand=True)
+        columns = ('Position', 'Name', 'Score')
+        self.list = ttk.Treeview(self.window, columns=columns, show='headings')
+        for column in columns:
+            self.list.heading(column, text=column)    
+        self.list.grid(row=1, column=0, rowspan=1, columnspan=1)
 
-        closeButton = tk.Button(self, text="Close")
-        closeButton.pack(side=tk.RIGHT, padx=5, pady=5)
-        okButton = tk.Button(self, text="OK")
-        okButton.pack(side=tk.RIGHT)
+        showScores = tk.Button(self.window, text="Show scores", width=15, command=self.show).grid(row=2, column=0, rowspan=1, columnspan=1)
 
 window = tk.Tk()
 window.title("GUI")
 window.geometry("500x500")
-app = MainWindow()
+app = MainWindow(window)
 window.mainloop()
