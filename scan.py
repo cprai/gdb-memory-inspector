@@ -114,11 +114,6 @@ class MainWindow(tk.Frame):
 
         tk.Button(self.window, text="Export",      width=15, command=self.export     ).grid(row=5, column=1, rowspan=1, columnspan=1)
 
-        #self.list.insert("", "end", values=("asdfasdf", "fsda", "42"))
-        #self.list.insert("", "end", values=("asdfasdf", "fsda", "44"))
-        #self.list.insert("", "end", values=("asdfasdf", "fsda", "45"))
-        #self.list.insert("", "end", values=("asdfasdf", "fsda", "46"))
-    
     def do_integer_scan(self):
         value = int(self.value_entry.get())
         bytes = int(self.bytes_entry.get())
