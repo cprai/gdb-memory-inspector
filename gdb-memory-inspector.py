@@ -11,7 +11,7 @@ class MemorySpaceView(QWidget):
         self.layout = QVBoxLayout()
         self.layout.addWidget(QLabel("Hello Qt"))
         btn = QPushButton('Top')
-        #btn.clicked.connect(self.parent.fn)
+        btn.clicked.connect(self.parent.boom)
         self.layout.addWidget(btn)
         self.layout.addWidget(QPushButton('Bottom'))
         self.table = QTableWidget(0, 3)
@@ -22,8 +22,9 @@ class MemorySpaceView(QWidget):
     def library_loaded(self, library):
         self.table.insertRow(self.table.rowCount())
         self.table.setItem(self.table.rowCount() - 1, 0, QTableWidgetItem(library["id"]))
-        self.table.setItem(self.table.rowCount() - 1, 1, QTableWidgetItem(library["ranges"][0]["from"]))
-        self.table.setItem(self.table.rowCount() - 1, 2, QTableWidgetItem(library["ranges"][0]["to"]))
+        if len(library["ranges"][0]) > 0:
+            self.table.setItem(self.table.rowCount() - 1, 1, QTableWidgetItem(library["ranges"][0]["from"]))
+            self.table.setItem(self.table.rowCount() - 1, 2, QTableWidgetItem(library["ranges"][0]["to"]))
 
 class GdbMemoryInspector(QApplication):
     def __init__(self):
@@ -35,23 +36,29 @@ class GdbMemoryInspector(QApplication):
         self.gdbmi_read_thread.start()
 
         # Start program
-        self.gdbmi_execute("-target-attach 15108")
+        self.gdbmi_execute("-target-attach 15977")
 
         # Init UI
         self.create_interface()
     
+    def boom(self):
+        self.gdbmi_execute("info proc mappings")
+        self.gdbmi_execute("c")
+    
     def gdbmi_read_thread(self):
-        try:
-            responses = self.gdbmi.get_gdb_response()
-        except gdbcontroller.GdbTimeoutError:
-            pass
-        else:
-            for response in responses:
-                self.gdbmi_handle_response(response)
+        while True:
+            try:
+                responses = self.gdbmi.get_gdb_response()
+            except gdbcontroller.GdbTimeoutError:
+                pass
+            else:
+                for response in responses:
+                    self.gdbmi_handle_response(response)
     
     def gdbmi_handle_response(self, response):
         print(json.dumps(response, indent=2))
-        if response["type"] == "notify" and response["message"] == "library-loaded":
+        #if response["type"] == "notify" and response["message"] == "library-loaded":
+        if response["message"] == "library-loaded":
             self.window.library_loaded(response["payload"])
 
     def gdbmi_execute(self, command):
