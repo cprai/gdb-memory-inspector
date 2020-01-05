@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import json
 import threading
 from PyQt5.QtWidgets import *
